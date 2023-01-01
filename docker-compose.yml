@@ -6,33 +6,23 @@ services:
     volumes:
       - ".:/code"
     ports:
-      - 8085:8000
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/us_futures
+      - 8000:8000
     depends_on:
       - mongo-local
     container_name: API-KASINVOICE
-    command: uvicorn main:app --host 0.0.0.0 --reload
+    command: uvicorn app:app --host 0.0.0.0 --reload
 
   mongo-local:
     image: mongo
     restart: always
+    ports:
+      - 27017:27017
     environment:
       MONGO_INITDB_ROOT_USERNAME: kasinvoice-user
       MONGO_INITDB_ROOT_PASSWORD: kasinvoice-password
 
     volumes:
       - mongo-data:/data/db
-
-  mongo-express:
-    image: mongo-express
-    restart: always
-    ports:
-      - 8081:8081
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: kasinvoice-user
-      ME_CONFIG_MONGODB_ADMINPASSWORD: kasinvoice-password
-      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo-local:27017/
 
 volumes:
  mongo-data:
