@@ -28,14 +28,14 @@ async def app_init():
         initialize crucial application services
     """
 
-    db = AsyncIOMotorClient(settings.MONGO_CONNECTION_STRING).kasinvoice
+    # db = AsyncIOMotorClient(settings.MONGO_CONNECTION_STRING).kasinvoice
 
-    await init_beanie(
-        database=db,
-        document_models=[
-            User
-        ]
-    )
+    # await init_beanie(
+    #     database=db,
+    #     document_models=[
+    #         User
+    #     ]
+    # )
 app.include_router(router, prefix=settings.API_V1_STR)
 
 

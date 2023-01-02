@@ -6,23 +6,6 @@ services:
     volumes:
       - ".:/code"
     ports:
-      - 8000:8000
-    depends_on:
-      - mongo-local
-    container_name: API-KASINVOICE
+      - 80:8000
+    container_name: monateri
     command: uvicorn app:app --host 0.0.0.0 --reload
-
-  mongo-local:
-    image: mongo
-    restart: always
-    ports:
-      - 27017:27017
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: kasinvoice-user
-      MONGO_INITDB_ROOT_PASSWORD: kasinvoice-password
-
-    volumes:
-      - mongo-data:/data/db
-
-volumes:
- mongo-data:
