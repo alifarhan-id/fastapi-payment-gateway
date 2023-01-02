@@ -4,11 +4,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 
-
-
 from bin.settings.settings import settings
 from router.router import router
-from models.user import User
+from models.user_model import User
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
