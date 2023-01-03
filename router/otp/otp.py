@@ -17,6 +17,6 @@ async def generate_otp(data: UserAuth):
 async def verify_otp(data: UserAuth):
     pass
 
-@otp_router.delete('/otp', summary="get otp", response_model=UserOut)
+@otp_router.get('/otp', summary="get otp", response_model=UserOut)
 async def verify_otp(data: UserAuth):
     pass
