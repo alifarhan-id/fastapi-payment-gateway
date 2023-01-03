@@ -3,7 +3,7 @@ from uuid import UUID
 from schemas.user_schema import UserAuth
 from models.user_model import User
 from bin.utils.utils import get_hashed_password
-import pymongo
+
 
 # from schemas.user_schema import UserUpdate
 

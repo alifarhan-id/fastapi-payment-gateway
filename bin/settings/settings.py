@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Monateri"
     
     # Database
-    MONGO_CONNECTION_STRING: str = config("MONGO_CONNECTION_STRING", cast=str)
+    DB_CONNECTION_STRING: str = config("DB_CONNECTION_STRING", cast=str)
     
     class Config:
         case_sensitive = True

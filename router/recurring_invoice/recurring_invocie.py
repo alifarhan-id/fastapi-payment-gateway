@@ -4,11 +4,11 @@ from fastapi import Depends
 from services.user_services import UserServices
 
 from models.user_model import User
-#from app.api.deps.user_deps import get_current_user
 
 
-user_router = APIRouter()
 
-@user_router.post('/register', summary="Create new user", response_model=UserOut)
-async def create_user(data: UserAuth):
+recurring_invoice_router = APIRouter()
+
+@recurring_invoice_router.get('/invoices/recurring', summary="recurring invoice and get list invoice", response_model=UserOut)
+async def invoices(data: UserAuth):
     pass
