@@ -1,11 +1,19 @@
+import logging
 from typing import Union
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
 
 from bin.settings.settings import settings
-from bin.database.database import conn
+from bin.database.database import Database
 from router.router import router
-from models.user_model import User
+
+
+
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -21,11 +29,21 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def app_init():
-    """
-        initialize crucial application services
-    """
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content=jsonable_encoder(
+            {
+                'statusCode': status.HTTP_400_BAD_REQUEST,
+                'success': False,
+                'error': f'Bad Request, {str(exc)}',
+                'data': None
+            }
+        ),
+    )
+
 
 
     

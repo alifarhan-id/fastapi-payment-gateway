@@ -3,7 +3,7 @@ from schemas.user_schema import UserAuth, UserOut
 from fastapi import Depends
 from services.user_services import UserServices
 
-from models.user_model import User
+from models.user_model import UserModel
 
 
 

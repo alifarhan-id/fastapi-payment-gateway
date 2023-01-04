@@ -1,13 +1,35 @@
-import logging
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from bin.settings.settings import settings
 
-engine = create_engine(settings.DB_CONNECTION_STRING)
+MYSQL_URL = settings.DB_CONNECTION_STRING
+POOL_SIZE = 20
+POOL_RECYCLE = 3600
+POOL_TIMEOUT = 15
+MAX_OVERFLOW = 2
+CONNECT_TIMEOUT = 60
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+class Database():
+    def __init__(self) -> None:
+        self.connection_is_active = False
+        self.engine = None
 
-Base = declarative_base()
+    def get_db_connection(self):
+        if self.connection_is_active == False:
+            connect_args = {"connect_timeout":CONNECT_TIMEOUT}
+            try:
+                self.engine = create_engine(MYSQL_URL, pool_size=POOL_SIZE, pool_recycle=POOL_RECYCLE,
+                        pool_timeout=POOL_TIMEOUT, max_overflow=MAX_OVERFLOW, connect_args=connect_args)
+                return self.engine
+            except Exception as ex:
+                print("Error connecting to DB : ", ex)
+        return self.engine
 
-conn = engine.connect()
+    def get_db_session(self,engine):
+        try:
+            Session = sessionmaker(bind=engine, expire_on_commit=False)
+            session = Session()
+            return session
+        except Exception as ex:
+            print("Error getting DB session : ", ex)
+            return None
