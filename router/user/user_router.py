@@ -1,11 +1,13 @@
 import sys
-from fastapi import APIRouter, HTTPException, status, Request, Response
+from fastapi import APIRouter, HTTPException, status, Request, Response, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from schemas.user_schema import RegisterSchema
 from schemas.response import ResponseData
 from bin.database.database import Database
-from bin.utils.utils import get_hashed_password, generate_secret_key, generate_oauth_access_token_id
+from bin.utils.utils import get_hashed_password, generate_secret_key, generate_oauth_access_token_id, create_access_token
+from bin.deps.deps import get_current_user
+from models.user_model import UserModel as User
 
 from models.user_model import UserModel, OauthAccessTokenModel, OauthClientModel
 #from app.api.deps.user_deps import get_current_user
@@ -19,6 +21,8 @@ session = db.get_db_session(engine)
 
 @user_router.post('/register', summary="Create new user")
 async def create_user(req: RegisterSchema, response: Response):
+    
+    
 
     try:
         user = UserModel()
@@ -32,7 +36,7 @@ async def create_user(req: RegisterSchema, response: Response):
         
         session.add(user)
         session.flush()
-        session.refresh(user, attribute_names=['id']) #refresh token and returning user.id
+        session.refresh(user, attribute_names=['id','email','first_name','last_name']) #refresh token and returning user.id
         # data = {"user_id": user.id}
         session.commit()
         session.close()
@@ -63,12 +67,15 @@ async def create_user(req: RegisterSchema, response: Response):
         session.flush()
         session.commit()
         session.close()
-
-
         
         client_id = session.query(OauthAccessTokenModel).filter(OauthAccessTokenModel.user_id == user.id).first()
+        token = create_access_token(user.email)
 
-        response_data = {       
+
+        response_data = {
+            'token': token,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
             'client_id': client_id.id,
             'client_secret': secret
         }
@@ -76,13 +83,16 @@ async def create_user(req: RegisterSchema, response: Response):
         response.status_code=status.HTTP_201_CREATED
         return ResponseData(status.HTTP_201_CREATED, True, None, response_data)
 
-    except IntegrityError:
+    except IntegrityError as ex:
         session.rollback()
         response.status_code=status.HTTP_400_BAD_REQUEST
         return ResponseData(status.HTTP_400_BAD_REQUEST, False, "Bad Request", None)
 
     except Exception as ex:
-        session.rollback()
+        # session.rollback()
         print(ex)
         response.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         return ResponseData(status.HTTP_500_INTERNAL_SERVER_ERROR, False, ex, None)
+
+
+

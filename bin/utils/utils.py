@@ -28,3 +28,36 @@ def generate_oauth_access_token_id(key: str) -> str:
     payload = "@!WE$%#@@@@@@@@DS@"
     secret_key = hmac.new(key.encode(), payload.encode(), hashlib.sha256).hexdigest()
     return secret_key
+
+
+def create_access_token(subject: Union[str, Any], expires_delta: int = None) -> str:
+    if expires_delta is not None:
+        expires_delta = datetime.utcnow() + expires_delta
+    else:
+        expires_delta = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode = {"exp": expires_delta, "sub": str(subject)}
+    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, settings.ALGORITHM)
+    return encoded_jwt
+
+def create_refresh_token(subject: Union[str, Any], expires_delta: int = None) -> str:
+    if expires_delta is not None:
+        expires_delta = datetime.utcnow() + expires_delta
+    else:
+        expires_delta = datetime.utcnow() + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode = {"exp": expires_delta, "sub": str(subject)}
+    encoded_jwt = jwt.encode(to_encode, settings.JWT_REFRESH_SECRET_KEY, settings.ALGORITHM)
+    return encoded_jwt
+
+
+async def validate_key(db, x_client_id: str, x_secret_id: str) -> bool:
+
+    keys = db.execute("SELECT oc.secret as x_client_secret, oat.id as x_client_id FROM oauth_clients as oc \
+        LEFT JOIN oauth_access_tokens as oat ON oc.user_id = oat.user_id WHERE oc.secret = :x_client_secret AND oat.id = :x_client_id",\
+            {"x_client_id":x_client_id, "x_client_secret": x_secret_id}).fetchone()
+    if not keys:
+        return False
+    else:
+        return True
+    

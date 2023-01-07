@@ -10,6 +10,7 @@ router = APIRouter()
 
 router.include_router(root.root, prefix='/root', tags=["root"])
 router.include_router(user_router.user_router,  tags=["AUTH"])
+router.include_router(product.product_router, tags=["Product"])
 router.include_router(invoice.invoice_router, tags=["Invoice"])
 router.include_router(recurring_invocie.recurring_invoice_router, tags=["Recurring Invoice"])
 router.include_router(payment.payment_router, tags=["Payment"])
