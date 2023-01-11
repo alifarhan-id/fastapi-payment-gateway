@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 
+
 from bin.settings.settings import settings
 from bin.database.database import Database
 from router.router import router

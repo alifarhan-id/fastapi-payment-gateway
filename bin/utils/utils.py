@@ -60,4 +60,12 @@ async def validate_key(db, x_client_id: str, x_secret_id: str) -> bool:
         return False
     else:
         return True
+
+
+def manipulated_string(param):
+    if param == None:    
+        return param
+
+    data = param.split('status_', 1)
+    return data[1].replace("_", " ")
     
