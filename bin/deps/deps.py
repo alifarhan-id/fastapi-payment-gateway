@@ -47,3 +47,8 @@ async def get_current_user(res: Response, token: str = Depends(reuseable_oauth))
 
 
     return user
+async def checkKey(client_id, secret_id):
+    if client_id is None or secret_id is None:
+        return False
+
+    return 

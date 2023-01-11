@@ -52,7 +52,9 @@ def create_refresh_token(subject: Union[str, Any], expires_delta: int = None) ->
 
 
 async def validate_key(db, x_client_id: str, x_secret_id: str) -> bool:
-
+    if x_client_id is None or x_secret_id is None:
+        return False
+        
     keys = db.execute("SELECT oc.secret as x_client_secret, oat.id as x_client_id FROM oauth_clients as oc \
         LEFT JOIN oauth_access_tokens as oat ON oc.user_id = oat.user_id WHERE oc.secret = :x_client_secret AND oat.id = :x_client_id",\
             {"x_client_id":x_client_id, "x_client_secret": x_secret_id}).fetchone()

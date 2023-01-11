@@ -23,19 +23,16 @@ async def products(data: UserAuth):
     pass
 
 
-@product_router.get('/products/{id}', summary="get details product")
-async def details_products(id: int, req: Request, res:Response,current_user: User = Depends(get_current_user)):
-    client_id = req.headers.get("x-client-id")
-    secret_id = req.headers.get("x-client-secret")
-
-    if client_id is None or secret_id is None:
-        res.status_code = status.HTTP_400_BAD_REQUEST
-        return ResponseData(400, False, "Bad Request, keys not found", None)
+@product_router.get('/product-detail/{id}', summary="get details product")
+async def details_products(
+    id: int,
+    req: Request,
+    res:Response,
+    current_user: User = Depends(get_current_user)):
     
-    keys = await validate_key(session, client_id, secret_id)
-
+    keys = await validate_key(session, req.headers.get("x-client-id"), req.headers.get("x-client-secret"))
     if not keys:
-        return ResponseData(400, False, "Bad Request, wrong keys", None)
+        return ResponseData(400, False, "Bad Request, keys invalid", None)
 
     try:
         rows = session.execute(
@@ -60,11 +57,14 @@ async def details_products(id: int, req: Request, res:Response,current_user: Use
                 }
                 return ResponseData(200, True, None, data)
             except Exception as ex:
-                return ResponseData(200, True, None, None)
+                print(ex)
+                res.status_code=status.HTTP_400_BAD_REQUEST
+                return ResponseData(status.HTTP_400_BAD_REQUEST, False, "Bad Request No data Reference", None)
 
 
         if not rows or rows is None:
-            return ResponseData(404, False, "no data reference", rows)
+            res.status_code=status.HTTP_400_BAD_REQUEST
+            return ResponseData(status.HTTP_400_BAD_REQUEST, False, "Bad Request No data Reference", None)
         data = {
             "id": rows[0].p_id,
             "name": rows[0].p_name,

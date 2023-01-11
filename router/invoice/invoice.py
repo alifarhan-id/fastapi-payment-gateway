@@ -29,35 +29,44 @@ session = db.get_db_session(engine)
 async def invoices(
         req: Request, 
         res:Response,
-        orderBy: Union[str, None] = None,
+        orderBy: Union[str, None] = "DESC",
         params:Params = Depends(),   
         current_user: User = Depends(get_current_user)
     ):
+    keys = await validate_key(session, req.headers.get("x-client-id"), req.headers.get("x-client-secret"))
+    if not keys:
+        return ResponseData(400, False, "Bad Request, keys invalid", None)
 
-    sql = f"SELECT inv.id as invoices_id, inv.client_id, inv.invoice_number, inv.sequence_number, inv.recurring, inv.date, inv.due_date, inv.status_id,\
+    try:
+        sql = f"SELECT inv.id as invoices_id, inv.client_id, inv.invoice_number, inv.sequence_number, inv.recurring, inv.date, inv.due_date, inv.status_id,\
           inv.recurring_cycle_id, inv.sub_total, inv.discount_type, inv.discount, inv.total, inv.received_amount, inv.due_amount, inv.notes, inv.terms,\
           inv.created_by, inv.deleted_at, inv.created_at, inv.updated_at, s.id as s_id, s.name status_name, s.class, c.id as c_id, rc.id as rc_id,\
           rc.name, u.id as userID, u.first_name, u.last_name FROM invoices as inv LEFT JOIN statuses as s ON s.id=inv.status_id LEFT JOIN  clients as c\
           ON c.id=inv.client_id LEFT JOIN users as u ON u.id=inv.client_id LEFT JOIN recurring_cycles as rc\
           ON rc.id=inv.recurring_cycle_id ORDER BY inv.id {orderBy}"
 
-    data = session.execute(sql).fetchall()
-    temp = paginate(data, params)
-    
+        data = session.execute(sql).fetchall()
+        temp = paginate(data, params)
 
-    return ResponseDataWithPagination(200, True, None, params, temp)
+        return ResponseDataWithPagination(200, True, None, params, temp)
+
+    except Exception as ex:
+        print(ex)
+        res.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        return ResponseData(status.HTTP_500_INTERNAL_SERVER_ERROR, False, ex, None)
 
 
-@invoice_router.get('/invoices/{id}', summary="get details invoice by id")
+
+@invoice_router.get('/invoice-details/{id}', summary="get details invoice by id")
 async def invoices(
     id: int,
     req: Request, 
     res:Response, 
     current_user: User = Depends(get_current_user) 
     ):
-    if id is None:
-       res.status_code=status.HTTP_400_BAD_REQUEST
-       return ResponseData(status.HTTP_400_BAD_REQUEST, False, "Bad Request", None)
+    keys = await validate_key(session, req.headers.get("x-client-id"), req.headers.get("x-client-secret"))
+    if not keys:
+        return ResponseData(400, False, "Bad Request, keys invalid", None)
     
     try:
         sql1 = f"SELECT i.client_id as ali_id, inv.id as invoices_id, inv.client_id, inv.invoice_number, inv.sequence_number, inv.recurring, inv.date, inv.due_date, inv.status_id,\
