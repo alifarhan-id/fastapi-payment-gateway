@@ -1,7 +1,9 @@
+from typing import Union
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, validator
 from models.user_model import UserModel
+
 
 
 class InvoicesOut(BaseModel):
@@ -30,3 +32,32 @@ class InvoicesOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class Product(BaseModel):
+    product_id:int
+    name:str
+    quantity:int
+    price:float
+    tax_id:Union[int, None] = None
+    amount:float
+
+
+class AddInvoice(BaseModel):
+    client_id                       :int
+    date                            :str
+    discount_type                   :str
+    discount                        :float
+    due_amount                      :float
+    due_date                        :str
+    invoice_number                  :str
+    notes                           :str
+    products                        :list[Product]
+    received_amount                 :float
+    recurring                       :str
+    status_id                       :int
+    sub_total                       :float
+    terms                           :str
+    total                           :float
+
+

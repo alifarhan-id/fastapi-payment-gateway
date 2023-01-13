@@ -35,18 +35,22 @@ async def get_current_user(res: Response, token: str = Depends(reuseable_oauth))
         token_data = TokenPayload(**payload)
         
         if datetime.fromtimestamp(token_data.exp) < datetime.now():
-            return ResponseAuth(401, False, "Token Expired", None)
+            res.status_code=status.HTTP_401_UNAUTHORIZED
+            return ResponseAuth(status.HTTP_401_UNAUTHORIZED, False, "Token Expired", None)
     except(jwt.JWTError, ValidationError):
-        return ResponseAuth(401, False, "Could not validate credentials", None)
+        res.status_code=status.HTTP_401_UNAUTHORIZED
+        return ResponseAuth(status.HTTP_401_UNAUTHORIZED, False, "Could not validate credentials", None)
         
         
     user = session.query(User).filter(User.email == token_data.sub).first()
     
     if not user:
-         return ResponseAuth(404, False, "Could not validate credentials", None)
-
+        res.status_code=status.HTTP_403_FORBIDDEN
+        return ResponseAuth(status.HTTP_403_FORBIDDEN, False, "Could not validate credentials", None)
 
     return user
+
+
 async def checkKey(client_id, secret_id):
     if client_id is None or secret_id is None:
         return False

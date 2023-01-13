@@ -2,12 +2,13 @@ import sys
 from fastapi import APIRouter, HTTPException, status, Request, Response, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from schemas.user_schema import RegisterSchema
+from schemas.user_schema import RegisterSchema, LoginPost
 from schemas.response import ResponseData
 from bin.database.database import Database
 from bin.utils.utils import get_hashed_password, generate_secret_key, generate_oauth_access_token_id, create_access_token
 from bin.deps.deps import get_current_user
-from models.user_model import UserModel as User
+from schemas.response import ResponseData
+from services.user_services import UserServices
 
 from models.user_model import UserModel, OauthAccessTokenModel, OauthClientModel
 #from app.api.deps.user_deps import get_current_user
@@ -96,3 +97,34 @@ async def create_user(req: RegisterSchema, response: Response):
 
 
 
+@user_router.post('/login', summary="login")
+async def create_user(
+    body:LoginPost,
+    req:Request,
+    res:Response
+    ):
+    try:
+        user = UserServices.authenticate(session, body.username, body.password)
+        print(user)
+        if not user:
+            res.status_code = status.HTTP_400_BAD_REQUEST
+            return ResponseData(status.HTTP_400_BAD_REQUEST, False, "Incorrect email or password", None)
+
+        token = create_access_token(user.id)
+        secret = generate_secret_key(user.email)
+        print(user.id)
+        client_id = session.execute("SELECT * FROM oauth_access_tokens WHERE user_id=:user_id", {"user_id":user.id}).fetchone()
+        print(client_id.id)
+        response = {
+            "token":token,
+            "first_name":user.first_name,
+            "last_name":user.last_name,
+            "client_id":client_id.id,
+            "client_secret":secret
+        }
+        res.status_code = status.HTTP_200_OK
+        return ResponseData(status.HTTP_200_OK, True, None, response)
+
+
+    except Exception as ex:
+        print(ex)

@@ -4,7 +4,7 @@ from sqlalchemy.sql import text, bindparam
 from fastapi_pagination import Page, paginate, add_pagination, Params
 from schemas.user_schema import UserAuth, UserOut
 from fastapi import Depends
-from schemas.invoices_schema import InvoicesOut
+from schemas.invoices_schema import AddInvoice
 from models.invoices_model import InvoicesModel
 from models.user_model import UserModel as User
 from bin.deps.deps import get_current_user
@@ -13,6 +13,7 @@ from models.product_model import ProductModel, CategoryModel, FileModel
 from schemas.response import ResponseData, ResponseDataWithPagination
 from bin.settings.settings import settings
 from bin.utils.utils import validate_key
+import datetime
 
 
 
@@ -56,7 +57,6 @@ async def invoices(
         return ResponseData(status.HTTP_500_INTERNAL_SERVER_ERROR, False, ex, None)
 
 
-
 @invoice_router.get('/invoice-details/{id}', summary="get details invoice by id")
 async def invoices(
     id: int,
@@ -64,6 +64,9 @@ async def invoices(
     res:Response, 
     current_user: User = Depends(get_current_user) 
     ):
+    # if current_user["statusCode"] > 200:
+    #     return current_user
+    print(current_user.id)
     keys = await validate_key(session, req.headers.get("x-client-id"), req.headers.get("x-client-secret"))
     if not keys:
         return ResponseData(400, False, "Bad Request, keys invalid", None)
@@ -183,12 +186,59 @@ async def invoices(
        res.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
        return ResponseData(status.HTTP_500_INTERNAL_SERVER_ERROR, False, ex, None)
 
+@invoice_router.post('/create-invoice', summary="create invoice")
+async def invoices(
+    body:AddInvoice,
+    req:Request,
+    res:Response,
+    current_user: User = Depends(get_current_user) 
+    ):
+    print(f"this is current user: {current_user}")
+    keys = await validate_key(session, req.headers.get("x-client-id"), req.headers.get("x-client-secret"))
+    if not keys:
+        return ResponseData(400, False, "Bad Request, keys invalid", None)
+
+    try:
+        sql_insert_invoices = "INSERT INTO invoices (client_id, date, discount, discount_type, due_amount, due_date, invoice_number, notes,\
+                received_amount, recurring, status_id, sub_total, terms, total) VALUES(:client_id, :date, :discount, :discount_type,\
+                :due_amount, :due_date, :invoice_number, :notes, :received_amount, :recurring, :status_id, :sub_total, :terms, :total)"
+        invoices_values = {
+            "client_id":body.client_id, 
+            "date":body.date, 
+            "discount":body.discount,
+            "discount_type":body.discount_type, 
+            "due_amount":body.due_amount,
+            "due_date":body.due_date, 
+            "invoice_number":body.invoice_number,
+            "notes":body.notes,
+            "received_amount":body.received_amount,
+            "recurring":body.recurring,
+            "status_id":body.status_id,
+            "sub_total":body.sub_total,
+            "terms":body.terms, "total":body.total,
+            "created_at":datetime.datetime.now(),
+            "updated_at":datetime.datetime.now()
+        }   
+
+        sql_insert_product = "INSERT INTO proudct (product_id, name, quantity, price, tax_id) VALUES(:product_id, :name, :quantity, :price, :tax_id)"
+        product_values = {
+            "product_id":body.products[0].product_id,
+            "name":body.products[0].name,
+            "quantity":body.products[0].quantity,
+            "price":body.products[0].price,
+            "tax_id":body.products[0].tax_id,
+            "created_at":datetime.datetime.now(),
+            "updated_at":datetime.datetime.now()
+        }
+        invoices = session.execute(sql_insert_invoices, invoices_values)
+        product = session.execute(sql_insert_product, product_values)
+
+    except Exception as ex:
+        print(ex)
+        res.status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        return ResponseData(status.HTTP_500_INTERNAL_SERVER_ERROR, False, ex, None)
+
 @invoice_router.delete('/invoices/{id}', summary="delete invoice by id", response_model=UserOut)
-async def invoices(data: UserAuth):
-    pass
-
-
-@invoice_router.post('/invoices', summary="create invoice", response_model=UserOut)
 async def invoices(data: UserAuth):
     pass
 
